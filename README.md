@@ -5,10 +5,12 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 ## Usage
 
 ```common-lisp
-(jose:encode :hs256 "my$ecret" '(("hello" . "world")))
+(defvar *key* (ironclad:ascii-string-to-byte-array "my$ecret"))
+
+(jose:encode :hs256 *key* '(("hello" . "world")))
 ;=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJoZWxsbyI6IndvcmxkIn0=.GryzOYLUnubFTF3O2RJzrqQxkOixPEOVhaK8lMYJseQ="
 
-(jose:decode :hs256 "my$ecret" *)
+(jose:decode :hs256 *key* *)
 ;=> (("hello" . "world"))
 ```
 

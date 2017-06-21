@@ -18,8 +18,7 @@
 (in-package #:jose/jws)
 
 (defun hmac-sign-message (digest-spec secret-key message)
-  (let ((hmac (ironclad:make-hmac (ironclad:ascii-string-to-byte-array secret-key)
-                                  digest-spec)))
+  (let ((hmac (ironclad:make-hmac secret-key digest-spec)))
     (ironclad:update-hmac hmac message)
     (ironclad:hmac-digest hmac)))
 
