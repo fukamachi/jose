@@ -4,7 +4,10 @@
            #:jws-error
            #:jwt-error
            #:jws-verification-error
-           #:jws-invalid-format))
+           #:jws-invalid-format
+           #:jwt-claims-error
+           #:jwt-claims-not-yet-valid
+           #:jwt-claims-expired))
 (in-package #:jose/errors)
 
 (define-condition jose-error (error) ())
