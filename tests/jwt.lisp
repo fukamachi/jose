@@ -28,7 +28,9 @@
                            `(("nbf" . ,(+ (- (get-universal-time) 2208988800) 1000))))))
     (ok (signals
             (jose/jwt:decode :hs256 *secret* token)
-            'jose/errors:jwt-claims-not-yet-valid))))
+            'jose/errors:jwt-claims-not-yet-valid))
+    (ok (handler-bind ((jose/errors:jwt-claims-not-yet-valid #'continue))
+          (jose/jwt:decode :hs256 *secret* token)))))
 
 (deftest test-exp
   (let ((token
@@ -42,4 +44,6 @@
                            `(("exp" . ,(- (- (get-universal-time) 2208988800) 1000))))))
     (ok (signals
             (jose/jwt:decode :hs256 *secret* token)
-            'jose/errors:jwt-claims-expired))))
+            'jose/errors:jwt-claims-expired))
+    (ok (handler-bind ((jose/errors:jwt-claims-expired #'continue))
+          (jose/jwt:decode :hs256 *secret* token)))))

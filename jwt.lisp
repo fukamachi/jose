@@ -32,7 +32,7 @@
       (unless (integerp (cdr nbf))
         (error 'jwt-claims-error :key "nbf" :value (cdr nbf)))
       (when (< (now) (cdr nbf))
-        (error 'jwt-claims-not-yet-valid)))
+        (cerror "Ignore nbf" 'jwt-claims-not-yet-valid)))
     t))
 
 (defun check-exp (claims)
@@ -41,7 +41,7 @@
       (unless (integerp (cdr exp))
         (error 'jwt-claims-error :key "exp" :value (cdr exp)))
       (when (< (cdr exp) (now))
-        (error 'jwt-claims-expired)))
+        (cerror "Ignore exp" 'jwt-claims-expired)))
     t))
 
 (defun check-iss (claims issuer)
