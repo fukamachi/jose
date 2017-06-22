@@ -54,4 +54,4 @@
         (jose/jwt:decode :hs256 *secret*
                          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.3MkJVAT-b30XkB4EwrYeqShkwa_GrHcJ1fp8xD1MoYk"))
     (ok (equal claims '(("a" . "b"))))
-    (ok (equal headers '(("typ" . "JWT") ("alg" . "HS256"))))))
+    (ok (equal headers '(("alg" . "HS256") ("typ" . "JWT"))))))

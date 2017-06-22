@@ -97,8 +97,9 @@
                  subject)
   (multiple-value-bind (payload headers)
       (jose/jws:verify algorithm key token)
-    (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
-                              :as :alist)))
+    (let ((claims (nreverse
+                   (jojo:parse (utf-8-bytes-to-string payload)
+                               :as :alist))))
       (check-claims claims
                     :issuer issuer
                     :audience audience

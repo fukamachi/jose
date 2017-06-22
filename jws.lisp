@@ -6,8 +6,6 @@
   (:import-from #:jonathan
                 #:to-json
                 #:parse)
-  (:import-from #:alexandria
-                #:alist-hash-table)
   (:import-from #:split-sequence
                 #:split-sequence)
   (:import-from #:assoc-utils
@@ -42,13 +40,12 @@
 (defun encode-headers (algorithm additional-headers)
   (base64url-encode
    (jojo:to-json
-    (alist-hash-table
-     `(,@additional-headers
-       ("typ" . "JWT")
-       ("alg" . ,(if (eq algorithm :none)
-                     "none"
-                     (symbol-name algorithm))))
-     :test 'equal))))
+    `(,@additional-headers
+      ("alg" . ,(if (eq algorithm :none)
+                    "none"
+                    (symbol-name algorithm)))
+      ("typ" . "JWT"))
+    :from :alist)))
 
 (defun get-signature (algorithm key message &key (start 0) (end (length message)))
   (let ((message (ironclad:ascii-string-to-byte-array message :start start :end end)))
@@ -108,7 +105,8 @@
     (macrolet ((safety (&body body)
                  `(handler-case (progn ,@body)
                     (error () (error 'jws-invalid-format :token token)))))
-      (let ((headers (safety (jojo:parse (base64url-decode headers :octets nil) :as :alist)))
+      (let ((headers (safety (nreverse
+                              (jojo:parse (base64url-decode headers :octets nil) :as :alist))))
             (payload (safety (base64url-decode payload)))
             (signature (safety (base64url-decode signature))))
         (values headers
