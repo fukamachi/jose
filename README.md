@@ -1,5 +1,9 @@
 # jose
 
+[![Quicklisp dist](http://quickdocs.org/badge/jose.svg)](http://quickdocs.org/jose/)
+[![Build Status](https://travis-ci.org/fukamachi/jose.svg?branch=master)](https://travis-ci.org/fukamachi/jose)
+[![Coverage Status](https://coveralls.io/repos/fukamachi/jose/badge.svg?branch=master)](https://coveralls.io/r/fukamachi/jose)
+
 A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 
 ## Usage
