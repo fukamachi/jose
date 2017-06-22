@@ -3,7 +3,8 @@
         #:jose/errors)
   (:import-from #:ironclad)
   (:import-from #:jonathan
-                #:to-json)
+                #:to-json
+                #:parse)
   (:import-from #:cl-base64
                 #:string-to-base64-string
                 #:usb8-array-to-base64-string
@@ -13,6 +14,8 @@
                 #:alist-hash-table)
   (:import-from #:split-sequence
                 #:split-sequence)
+  (:import-from #:assoc-utils
+                #:aget)
   (:export #:sign
            #:verify))
 (in-package #:jose/jws)
@@ -75,6 +78,28 @@
             message
             (usb8-array-to-base64-string (get-signature algorithm key message)))))
 
+(defun %verify-message (algorithm key message signature)
+  (ecase algorithm
+    (:hs256
+     (hmac-verify-signature :sha256 key message signature))
+    (:hs384
+     (hmac-verify-signature :sha384 key message signature))
+    (:hs512
+     (hmac-verify-signature :sha512 key message signature))
+    (:rs256
+     (rsa-verify-signature :sha256 key message signature))
+    (:rs384
+     (rsa-verify-signature :sha384 key message signature))
+    (:rs512
+     (rsa-verify-signature :sha512 key message signature))
+    (:none (zerop (length signature)))))
+
+(defun check-alg (headers algorithm)
+  (equal (aget headers "alg")
+         (if (eq algorithm :none)
+             "none"
+             (symbol-name algorithm))))
+
 (defun verify (algorithm key token)
   (destructuring-bind (&optional headers payload signature &rest rest)
       (split-sequence #\. token)
@@ -83,24 +108,17 @@
                  signature
                  (null rest))
       (error 'jws-invalid-format :token token))
-    (let ((message
-            (ironclad:ascii-string-to-byte-array
-             (subseq token 0 (- (length token) (length signature) 1))))
-          (signature (base64-string-to-usb8-array signature)))
-      (values
-       (ecase algorithm
-         (:hs256
-          (hmac-verify-signature :sha256 key message signature))
-         (:hs384
-          (hmac-verify-signature :sha384 key message signature))
-         (:hs512
-          (hmac-verify-signature :sha512 key message signature))
-         (:rs256
-          (rsa-verify-signature :sha256 key message signature))
-         (:rs384
-          (rsa-verify-signature :sha384 key message signature))
-         (:rs512
-          (rsa-verify-signature :sha512 key message signature))
-         (:none (zerop (length signature))))
-       (base64-string-to-string payload)
-       (base64-string-to-string headers)))))
+    (macrolet ((safety (&body body)
+                 `(handler-case (progn ,@body)
+                    (error () (error 'jws-invalid-format :token token)))))
+      (let ((message (safety
+                      (ironclad:ascii-string-to-byte-array
+                       (subseq token 0 (- (length token) (length signature) 1)))))
+            (headers (safety (jojo:parse (base64-string-to-string headers) :as :alist)))
+            (payload (safety (base64-string-to-usb8-array payload)))
+            (signature (safety (base64-string-to-usb8-array signature))))
+        (values
+         (and (%verify-message algorithm key message signature)
+              (check-alg headers algorithm))
+         payload
+         headers)))))

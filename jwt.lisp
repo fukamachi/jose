@@ -4,6 +4,8 @@
   (:import-from #:jose/jws)
   (:import-from #:jonathan
                 #:to-json)
+  (:import-from #:trivial-utf-8
+                #:utf-8-bytes-to-string)
   (:import-from #:alexandria
                 #:ensure-list)
   (:import-from #:assoc-utils
@@ -90,7 +92,8 @@
                 validp)
       (error 'jws-verification-error :token token))
 
-    (let ((claims (jojo:parse payload :as :alist)))
+    (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
+                              :as :alist)))
       (check-claims claims
                     :issuer issuer
                     :audience audience
