@@ -88,7 +88,7 @@
       (jose/jws:decode-token token)
     (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
                               :as :alist)))
-      (values headers claims signature))))
+      (values claims headers signature))))
 
 (defun decode (algorithm key token
                &key
