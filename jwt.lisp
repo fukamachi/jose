@@ -11,6 +11,7 @@
   (:import-from #:assoc-utils
                 #:aget)
   (:export #:encode
+           #:inspect-token
            #:decode))
 (in-package #:jose/jwt)
 
@@ -80,6 +81,14 @@
   (check-aud claims audience)
   (check-sub claims subject)
   (check-jti claims))
+
+(defun inspect-token (token)
+  "Decodes the TOKEN without signature verification."
+  (multiple-value-bind (headers payload signature)
+      (jose/jws:decode-token token)
+    (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
+                              :as :alist)))
+      (values headers claims signature))))
 
 (defun decode (algorithm key token
                &key

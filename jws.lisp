@@ -13,7 +13,8 @@
   (:import-from #:assoc-utils
                 #:aget)
   (:export #:sign
-           #:verify))
+           #:verify
+           #:decode-token))
 (in-package #:jose/jws)
 
 (defun hmac-sign-message (digest-spec secret-key message &key (start 0) (end (length message)))
