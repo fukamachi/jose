@@ -46,12 +46,12 @@
        ("alg" . ,(if (eq algorithm :none)
                      "none"
                      (symbol-name algorithm))))
-     :test 'equal))))
+     :test 'equal))
+   :uri t))
 
 (defun encode-payload (payload)
   (etypecase payload
-    (string (string-to-base64-string payload))
-    ((array (unsigned-byte 8) (*)) (usb8-array-to-base64-string payload))))
+    ((array (unsigned-byte 8) (*)) (usb8-array-to-base64-string payload :uri t))))
 
 (defun get-signature (algorithm key message)
   (let ((message (ironclad:ascii-string-to-byte-array message)))
@@ -76,7 +76,7 @@
          (message (format nil "~A.~A" encoded-headers encoded-payload)))
     (format nil "~A.~A"
             message
-            (usb8-array-to-base64-string (get-signature algorithm key message)))))
+            (usb8-array-to-base64-string (get-signature algorithm key message) :uri t))))
 
 (defun %verify-message (algorithm key message signature)
   (ecase algorithm
@@ -114,9 +114,9 @@
       (let ((message (safety
                       (ironclad:ascii-string-to-byte-array
                        (subseq token 0 (- (length token) (length signature) 1)))))
-            (headers (safety (jojo:parse (base64-string-to-string headers) :as :alist)))
-            (payload (safety (base64-string-to-usb8-array payload)))
-            (signature (safety (base64-string-to-usb8-array signature))))
+            (headers (safety (jojo:parse (base64-string-to-string headers :uri t) :as :alist)))
+            (payload (safety (base64-string-to-usb8-array payload :uri t)))
+            (signature (safety (base64-string-to-usb8-array signature :uri t))))
         (values
          (and (%verify-message algorithm key message signature)
               (check-alg headers algorithm))

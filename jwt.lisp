@@ -15,7 +15,7 @@
 (in-package #:jose/jwt)
 
 (defun encode (algorithm key claims &key headers)
-  (jose/jws:sign algorithm key (jojo:to-json claims :from :alist) :headers headers))
+  (jose/jws:sign algorithm key (jojo:to-json claims :from :alist :octets t) :headers headers))
 
 (defun now ()
   (- (get-universal-time) 2208988800))
