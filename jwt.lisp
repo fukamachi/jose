@@ -82,20 +82,16 @@
   (check-jti claims))
 
 (defun decode (algorithm key token
-               &key (verifyp t)
+               &key
                  issuer
                  audience
                  subject)
-  (multiple-value-bind (validp payload)
+  (multiple-value-bind (payload headers)
       (jose/jws:verify algorithm key token)
-    (unless (or (not verifyp)
-                validp)
-      (error 'jws-verification-error :token token))
-
     (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
                               :as :alist)))
       (check-claims claims
                     :issuer issuer
                     :audience audience
                     :subject subject)
-      claims)))
+      (values claims headers))))

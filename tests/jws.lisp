@@ -12,9 +12,8 @@
 (deftest test-verify-token
   (let ((token
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67_QGs52AzC8Ru8"))
-    (multiple-value-bind (validp payload headers)
+    (multiple-value-bind (payload headers)
         (jose/jws:verify :hs256 *secret* token)
-      (ok validp)
       (ok (vectorp payload))
       (ok (consp headers)))))
 
@@ -28,7 +27,9 @@
 (deftest test-header-invalid-padding
   (let ((token
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9A.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67_QGs52AzC8Ru8"))
-    (ok (not (jose/jws:verify :hs256 *secret* token)))))
+    (ok (signals
+            (jose/jws:verify :hs256 *secret* token)
+            'jose/errors:jws-verification-error))))
 
 (deftest test-header-not-json
   (let ((token
@@ -40,7 +41,9 @@
 (deftest test-claims-invalid-padding
   (let ((token
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.AeyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67_QGs52AzC8Ru8"))
-    (ok (not (jose/jws:verify :hs256 *secret* token)))))
+    (ok (signals
+            (jose/jws:verify :hs256 *secret* token)
+            'jose/errors:jws-verification-error))))
 
 (deftest test-claims-not-json
   (let ((token

@@ -96,7 +96,7 @@
              "none"
              (symbol-name algorithm))))
 
-(defun verify (algorithm key token)
+(defun decode-token (token)
   (destructuring-bind (&optional headers payload signature &rest rest)
       (split-sequence #\. token)
     (unless (and headers
@@ -107,17 +107,24 @@
     (macrolet ((safety (&body body)
                  `(handler-case (progn ,@body)
                     (error () (error 'jws-invalid-format :token token)))))
-      (let ((message-end (- (length token) (length signature) 1)))
-        (let ((message (safety
-                        (ironclad:ascii-string-to-byte-array
-                         token
-                         :start 0 :end message-end)))
-              (headers (safety (jojo:parse (base64url-decode headers :octets nil) :as :alist)))
-              (payload (safety (base64url-decode payload)))
-              (signature (safety (base64url-decode signature))))
-          (values
-           (and (%verify-message algorithm key message signature
-                                 :start 0 :end message-end)
-                (check-alg headers algorithm))
-           payload
-           headers))))))
+      (let ((headers (safety (jojo:parse (base64url-decode headers :octets nil) :as :alist)))
+            (payload (safety (base64url-decode payload)))
+            (signature (safety (base64url-decode signature))))
+        (values headers
+                payload
+                signature)))))
+
+(defun verify (algorithm key token)
+  (multiple-value-bind (headers payload signature)
+      (decode-token token)
+    (let* ((message-end (position #\. token :from-end t))
+           (message
+             (ironclad:ascii-string-to-byte-array token
+                                                  :start 0 :end message-end)))
+      (unless (and (%verify-message algorithm key message signature
+                                    :start 0 :end message-end)
+                   (check-alg headers algorithm))
+        (cerror "Skip signature verification"
+                'jws-verification-error :token token))
+
+      (values payload headers))))
