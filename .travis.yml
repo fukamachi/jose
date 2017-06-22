@@ -1,0 +1,23 @@
+language: common-lisp
+sudo: false
+
+env:
+  global:
+    - PATH=~/.roswell/bin:$PATH
+    - ROSWELL_INSTALL_DIR=$HOME/.roswell
+    - COVERAGE_EXCLUDE=tests
+  matrix:
+    - LISP=sbcl-bin COVERALLS=true
+    - LISP=ccl-bin
+
+install:
+  # Roswell
+  - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
+  # PEM
+  - ros install fukamachi/pem
+  - ros install fukamachi/asn1
+  # Rove
+  - ros install fukamachi/rove
+
+script:
+  - rove jose.asd
