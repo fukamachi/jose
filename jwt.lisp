@@ -15,7 +15,7 @@
 (in-package #:jose/jwt)
 
 (defun encode (algorithm key claims &key headers)
-  (jose/jws:sign algorithm key (jojo:to-json claims :from :alist :octets t) :headers headers))
+  (jose/jws:sign algorithm key (jojo:to-json claims :from :alist) :headers headers))
 
 (defun now ()
   (- (get-universal-time) 2208988800))
@@ -31,7 +31,7 @@
     (when nbf
       (unless (integerp (cdr nbf))
         (error 'jwt-claims-error :key "nbf" :value (cdr nbf)))
-      (unless (< (now) (cdr nbf))
+      (when (< (now) (cdr nbf))
         (error 'jwt-claims-not-yet-valid)))
     t))
 
