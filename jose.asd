@@ -4,4 +4,5 @@
   :author "Eitaro Fukamachi"
   :license "BSD 2-Clause"
   :description "JSON Object Signing and Encryption (JOSE) implementation"
-  :depends-on ("jose/main"))
+  :depends-on ("jose/main")
+  :in-order-to ((test-op (test-op jose/tests))))
