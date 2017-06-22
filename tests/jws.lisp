@@ -1,6 +1,7 @@
 (defpackage #:jose/tests/jws
   (:use #:cl
         #:rove
+        #:pem
         #:jose/jws))
 (in-package #:jose/tests/jws)
 

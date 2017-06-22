@@ -5,4 +5,10 @@
   :license "BSD 2-Clause"
   :description "JSON Object Signing and Encryption (JOSE) implementation"
   :depends-on ("jose/main")
-  :in-order-to ((test-op (test-op jose/tests))))
+  :in-order-to ((test-op (test-op "jose/tests"))))
+
+(defsystem "jose/tests"
+  :class :package-inferred-system
+  :depends-on ("rove"
+               "jose/tests/jws")
+  :perform (test-op (o c) (symbol-call :rove '#:run c)))
