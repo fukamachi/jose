@@ -1,15 +1,11 @@
 (defpackage #:jose/jws
   (:use #:cl
+        #:jose/base64
         #:jose/errors)
   (:import-from #:ironclad)
   (:import-from #:jonathan
                 #:to-json
                 #:parse)
-  (:import-from #:cl-base64
-                #:string-to-base64-string
-                #:usb8-array-to-base64-string
-                #:base64-string-to-string
-                #:base64-string-to-usb8-array)
   (:import-from #:alexandria
                 #:alist-hash-table)
   (:import-from #:split-sequence
@@ -38,7 +34,7 @@
                              signature))
 
 (defun encode-headers (algorithm additional-headers)
-  (string-to-base64-string
+  (base64url-encode
    (jojo:to-json
     (alist-hash-table
      `(,@additional-headers
@@ -46,12 +42,7 @@
        ("alg" . ,(if (eq algorithm :none)
                      "none"
                      (symbol-name algorithm))))
-     :test 'equal))
-   :uri t))
-
-(defun encode-payload (payload)
-  (etypecase payload
-    ((array (unsigned-byte 8) (*)) (usb8-array-to-base64-string payload :uri t))))
+     :test 'equal))))
 
 (defun get-signature (algorithm key message)
   (let ((message (ironclad:ascii-string-to-byte-array message)))
@@ -72,11 +63,11 @@
 
 (defun sign (algorithm key payload &key headers)
   (let* ((encoded-headers (encode-headers algorithm headers))
-         (encoded-payload (encode-payload payload))
+         (encoded-payload (base64url-encode payload))
          (message (format nil "~A.~A" encoded-headers encoded-payload)))
     (format nil "~A.~A"
             message
-            (usb8-array-to-base64-string (get-signature algorithm key message) :uri t))))
+            (base64url-encode (get-signature algorithm key message)))))
 
 (defun %verify-message (algorithm key message signature)
   (ecase algorithm
@@ -114,9 +105,9 @@
       (let ((message (safety
                       (ironclad:ascii-string-to-byte-array
                        (subseq token 0 (- (length token) (length signature) 1)))))
-            (headers (safety (jojo:parse (base64-string-to-string headers :uri t) :as :alist)))
-            (payload (safety (base64-string-to-usb8-array payload :uri t)))
-            (signature (safety (base64-string-to-usb8-array signature :uri t))))
+            (headers (safety (jojo:parse (base64url-decode headers :octets nil) :as :alist)))
+            (payload (safety (base64url-decode payload)))
+            (signature (safety (base64url-decode signature))))
         (values
          (and (%verify-message algorithm key message signature)
               (check-alg headers algorithm))
