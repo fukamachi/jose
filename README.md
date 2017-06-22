@@ -12,7 +12,7 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 (defvar *key* (ironclad:ascii-string-to-byte-array "my$ecret"))
 
 (jose:encode :hs256 *key* '(("hello" . "world")))
-;=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJoZWxsbyI6IndvcmxkIn0=.GryzOYLUnubFTF3O2RJzrqQxkOixPEOVhaK8lMYJseQ="
+;=> "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJoZWxsbyI6IndvcmxkIn0.Vr0VKL9WHX9lUPWzrE0DX4fEvl0_CgnKlzI2mWiro8E"
 
 (jose:decode :hs256 *key* *)
 ;=> (("hello" . "world"))
