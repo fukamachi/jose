@@ -13,9 +13,9 @@ env:
 install:
   # Roswell
   - curl -L https://raw.githubusercontent.com/roswell/roswell/release/scripts/install-for-ci.sh | sh
-  # PEM
-  - ros install fukamachi/pem
+  # ASN.1 & PEM
   - ros install fukamachi/asn1
+  - ros install fukamachi/pem
   # Rove
   - ros install fukamachi/rove
 
