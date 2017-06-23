@@ -15,7 +15,8 @@
 (define-condition jws-error (jose-error) ())
 (define-condition jwt-error (jose-error) ())
 
-(define-condition jws-verification-error (jws-error) ())
+(define-condition jws-verification-error (jws-error)
+  ((token :initarg :token)))
 (define-condition jws-invalid-format (jws-error)
   ((token :initarg :token)))
 
