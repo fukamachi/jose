@@ -33,9 +33,13 @@
 
 (defun rsa-verify-signature (digest-spec public-key message signature
                              &key (start 0) (end (length message)))
-  (ironclad:verify-signature public-key
-                             (ironclad:digest-sequence digest-spec message :start start :end end)
-                             signature))
+  (handler-case
+      (ironclad:verify-signature public-key
+                                 (ironclad:digest-sequence digest-spec message :start start :end end)
+                                 signature)
+    (error (e)
+      (warn "~A" e)
+      nil)))
 
 (defun encode-headers (algorithm additional-headers)
   (base64url-encode
