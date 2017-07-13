@@ -1,8 +1,10 @@
 (defpackage #:jose/base64
   (:use #:cl)
   (:import-from #:cl-base64
+                #:integer-to-base64-string
                 #:string-to-base64-string
                 #:usb8-array-to-base64-string
+                #:base64-string-to-integer
                 #:base64-string-to-usb8-array
                 #:base64-string-to-string)
   (:export #:base64url-encode
@@ -25,12 +27,18 @@
   (string-right-trim
    (list base64::*uri-pad-char*)
    (etypecase input
+     (integer
+      (integer-to-base64-string input :uri t))
      (string
       (string-to-base64-string input :uri t))
      (octets
       (usb8-array-to-base64-string input :uri t)))))
 
 (defun base64url-decode (input &key (octets t))
-  (if octets
-      (base64-string-to-usb8-array (add-padding input) :uri t)
-      (base64-string-to-string (add-padding input) :uri t)))
+  (etypecase input
+    (string
+     (if octets
+         (base64-string-to-usb8-array (add-padding input) :uri t)
+         (base64-string-to-string (add-padding input) :uri t)))
+    (integer
+     (base64-string-to-integer (add-padding input) :uri t))))
