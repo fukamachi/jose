@@ -110,7 +110,7 @@
                  `(handler-case (progn ,@body)
                     (error () (error 'jws-invalid-format :token token)))))
       (let ((headers (safety (nreverse
-                              (jojo:parse (base64url-decode headers :octets nil) :as :alist))))
+                              (jojo:parse (base64url-decode headers :as :string) :as :alist))))
             (payload (safety (base64url-decode payload)))
             (signature (safety (base64url-decode signature))))
         (values headers
