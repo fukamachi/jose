@@ -34,11 +34,9 @@
      (octets
       (usb8-array-to-base64-string input :uri t)))))
 
-(defun base64url-decode (input &key (octets t))
-  (etypecase input
-    (string
-     (if octets
-         (base64-string-to-usb8-array (add-padding input) :uri t)
-         (base64-string-to-string (add-padding input) :uri t)))
-    (integer
-     (base64-string-to-integer (add-padding input) :uri t))))
+(defun base64url-decode (input &key (as :octets))
+  (check-type input string)
+  (ecase as
+    (:octets (base64-string-to-usb8-array (add-padding input) :uri t))
+    (:string (base64-string-to-string (add-padding input) :uri t))
+    (:integer (base64-string-to-integer (add-padding input) :uri t))))
