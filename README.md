@@ -37,7 +37,18 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 * RS256
 * RS384
 * RS512
+* PS256
+* PS384
+* PS512
 * none
+
+## Recommendation
+
+The original [Ironclad](https://github.com/froydnj/ironclad) doesn't generate a portable signature and cannot verify tokens which is made by other libraries.
+
+If Jose has to exchange JWTs with other libraries, using my fork of Ironclad is recommended.
+
+* https://github.com/fukamachi/ironclad
 
 ## Author
 

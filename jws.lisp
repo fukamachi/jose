@@ -20,10 +20,15 @@
     (ironclad:update-hmac hmac message :start start :end end)
     (ironclad:hmac-digest hmac)))
 
-(defun rsa-sign-message (digest-spec private-key message &key (start 0) (end (length message)))
-  (ironclad:sign-message private-key
-                         (ironclad:digest-sequence digest-spec message
-                                                   :start start :end end)))
+(defun rsa-sign-message (digest-spec private-key message &key (start 0) (end (length message)) pss)
+  (if pss
+      (ironclad:sign-message private-key
+                             message
+                             :start start :end end
+                             :pss digest-spec)
+      (ironclad:sign-message private-key
+                             (ironclad:digest-sequence digest-spec message
+                                                       :start start :end end))))
 
 (defun hmac-verify-signature (digest-spec verification-key message signature
                               &key (start 0) (end (length message)))
@@ -32,11 +37,17 @@
           signature))
 
 (defun rsa-verify-signature (digest-spec public-key message signature
-                             &key (start 0) (end (length message)))
+                             &key (start 0) (end (length message)) pss)
   (handler-case
-      (ironclad:verify-signature public-key
-                                 (ironclad:digest-sequence digest-spec message :start start :end end)
-                                 signature)
+      (if pss
+          (ironclad:verify-signature public-key
+                                     message
+                                     signature
+                                     :start start :end end
+                                     :pss digest-spec)
+          (ironclad:verify-signature public-key
+                                     (ironclad:digest-sequence digest-spec message :start start :end end)
+                                     signature))
     (error (e)
       (warn "~A" e)
       nil)))
@@ -66,6 +77,12 @@
        (rsa-sign-message :sha384 key message :start start :end end))
       (:rs512
        (rsa-sign-message :sha512 key message :start start :end end))
+      (:ps256
+       (rsa-sign-message :sha256 key message :start start :end end :pss t))
+      (:ps384
+       (rsa-sign-message :sha384 key message :start start :end end :pss t))
+      (:ps512
+       (rsa-sign-message :sha512 key message :start start :end end :pss t))
       (:none ""))))
 
 (defun sign (algorithm key payload &key headers)
@@ -90,6 +107,12 @@
      (rsa-verify-signature :sha384 key message signature :start start :end end))
     (:rs512
      (rsa-verify-signature :sha512 key message signature :start start :end end))
+    (:ps256
+     (rsa-verify-signature :sha256 key message signature :start start :end end :pss t))
+    (:ps384
+     (rsa-verify-signature :sha384 key message signature :start start :end end :pss t))
+    (:ps512
+     (rsa-verify-signature :sha512 key message signature :start start :end end :pss t))
     (:none (zerop (length signature)))))
 
 (defun check-alg (headers algorithm)
