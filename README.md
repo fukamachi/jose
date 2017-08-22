@@ -42,6 +42,10 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 * PS512
 * none
 
+## See Also
+
+* [JOSE Working Group](https://datatracker.ietf.org/wg/jose/about/)
+
 ## Author
 
 * Eitaro Fukamachi (e.arrows@gmail.com)
