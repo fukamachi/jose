@@ -18,7 +18,10 @@
 (define-condition jws-verification-error (jws-error)
   ((token :initarg :token)))
 (define-condition jws-invalid-format (jws-error)
-  ((token :initarg :token)))
+  ((token :initarg :token))
+  (:report (lambda (condition stream)
+             (format stream "Token is invalid format.~%  token = ~S"
+                     (slot-value condition 'token)))))
 
 (define-condition jwt-claims-error (jwt-error)
   ((key :initarg :key)
