@@ -3,7 +3,8 @@
         #:jose/errors)
   (:import-from #:jose/jws)
   (:import-from #:jonathan
-                #:to-json)
+                #:to-json
+                #:<jonathan-error>)
   (:import-from #:trivial-utf-8
                 #:utf-8-bytes-to-string)
   (:import-from #:alexandria
@@ -86,8 +87,12 @@
   "Decodes the TOKEN without signature verification."
   (multiple-value-bind (headers payload signature)
       (jose/jws:decode-token token)
-    (let ((claims (jojo:parse (utf-8-bytes-to-string payload)
-                              :as :alist)))
+    (let ((claims (handler-case
+                      (jojo:parse (utf-8-bytes-to-string payload)
+                                  :as :alist)
+                    (jojo:<jonathan-error> ()
+                      (error 'jws-invalid-format
+                             :token token)))))
       (values claims headers signature))))
 
 (defun decode (algorithm key token
@@ -98,8 +103,12 @@
   (multiple-value-bind (payload headers)
       (jose/jws:verify algorithm key token)
     (let ((claims (nreverse
-                   (jojo:parse (utf-8-bytes-to-string payload)
-                               :as :alist))))
+                   (handler-case
+                       (jojo:parse (utf-8-bytes-to-string payload)
+                                   :as :alist)
+                     (jojo:<jonathan-error> ()
+                       (error 'jws-invalid-format
+                              :token token))))))
       (check-claims claims
                     :issuer issuer
                     :audience audience
