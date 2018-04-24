@@ -7,6 +7,9 @@
                 #:base64-string-to-integer
                 #:base64-string-to-usb8-array
                 #:base64-string-to-string)
+  (:import-from #:trivial-utf-8
+                #:string-to-utf-8-bytes
+                #:utf-8-bytes-to-string)
   (:export #:base64url-encode
            #:base64url-decode))
 (in-package #:jose/base64)
@@ -30,7 +33,9 @@
      (integer
       (integer-to-base64-string input :uri t))
      (string
-      (string-to-base64-string input :uri t))
+      (usb8-array-to-base64-string
+       (string-to-utf-8-bytes input)
+       :uri t))
      (octets
       (usb8-array-to-base64-string input :uri t)))))
 
@@ -38,5 +43,5 @@
   (check-type input string)
   (ecase as
     (:octets (base64-string-to-usb8-array (add-padding input) :uri t))
-    (:string (base64-string-to-string (add-padding input) :uri t))
+    (:string (utf-8-bytes-to-string (base64-string-to-usb8-array (add-padding input) :uri t)))
     (:integer (base64-string-to-integer (add-padding input) :uri t))))
