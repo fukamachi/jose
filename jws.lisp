@@ -20,6 +20,48 @@
     (ironclad:update-hmac hmac message :start start :end end)
     (ironclad:hmac-digest hmac)))
 
+(defun digest-with-pkcs1-padding (digest-spec message &key (start 0) (end (length message)))
+  (let ((digest (ironclad:digest-sequence digest-spec message :start start :end end))
+        (asn1-digest-info
+          (case digest-spec
+            (:sha256 #(#x30 #x31 #x30 #x0d #x06 #x09 #x60 #x86 #x48
+                       #x01 #x65 #x03 #x04 #x02 #x01 #x05 #x00 #x04 #x20))
+            (:sha384 #(#x30 #x41 #x30 #x0d #x06 #x09 #x60 #x86 #x48
+                       #x01 #x65 #x03 #x04 #x02 #x02 #x05 #x00 #x04 #x30))
+            (:sha512 #(#x30 #x51 #x30 #x0d #x06 #x09 #x60 #x86 #x48
+                       #x01 #x65 #x03 #x04 #x02 #x03 #x05 #x00 #x04 #x40))))
+        (pkcs1-padding
+          (case digest-spec
+            (:sha256 #(0 1
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff
+                       0))
+            (:sha384 #(0 1
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff
+                       0))
+            (:sha512 #(0 1
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
+                       #xff #xff
+                       0)))))
+    (concatenate '(SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*))
+                 pkcs1-padding
+                 asn1-digest-info
+                 digest)))
+
 (defun rsa-sign-message (digest-spec private-key message &key (start 0) (end (length message)) pss)
   (if pss
       (ironclad:sign-message private-key
@@ -27,8 +69,8 @@
                              :start start :end end
                              :pss digest-spec)
       (ironclad:sign-message private-key
-                             (ironclad:digest-sequence digest-spec message
-                                                       :start start :end end))))
+                             (digest-with-pkcs1-padding digest-spec message
+                                                        :start start :end end))))
 
 (defun hmac-verify-signature (digest-spec verification-key message signature
                               &key (start 0) (end (length message)))
@@ -46,7 +88,7 @@
                                      :start start :end end
                                      :pss digest-spec)
           (ironclad:verify-signature public-key
-                                     (ironclad:digest-sequence digest-spec message :start start :end end)
+                                     (digest-with-pkcs1-padding digest-spec message :start start :end end)
                                      signature))
     (error (e)
       (warn "~A" e)
