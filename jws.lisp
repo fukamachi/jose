@@ -20,7 +20,7 @@
     (ironclad:update-hmac hmac message :start start :end end)
     (ironclad:hmac-digest hmac)))
 
-(defun digest-with-pkcs1-padding (digest-spec message &key (start 0) (end (length message)))
+(defun digest-with-pkcs1-padding (digest-spec message &key (start 0) (end (length message)) key-length)
   (let ((digest (ironclad:digest-sequence digest-spec message :start start :end end))
         (asn1-digest-info
           (case digest-spec
@@ -29,36 +29,12 @@
             (:sha384 #(#x30 #x41 #x30 #x0d #x06 #x09 #x60 #x86 #x48
                        #x01 #x65 #x03 #x04 #x02 #x02 #x05 #x00 #x04 #x30))
             (:sha512 #(#x30 #x51 #x30 #x0d #x06 #x09 #x60 #x86 #x48
-                       #x01 #x65 #x03 #x04 #x02 #x03 #x05 #x00 #x04 #x40))))
-        (pkcs1-padding
-          (case digest-spec
-            (:sha256 #(0 1
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff
-                       0))
-            (:sha384 #(0 1
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff
-                       0))
-            (:sha512 #(0 1
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff #xff #xff #xff #xff #xff #xff #xff #xff
-                       #xff #xff
-                       0)))))
+                       #x01 #x65 #x03 #x04 #x02 #x03 #x05 #x00 #x04 #x40)))))
     (concatenate '(SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*))
-                 pkcs1-padding
+                 #(0 1)
+                 (make-array (max 0 (- key-length 3 (length asn1-digest-info) (length digest)))
+                             :initial-element #xff :element-type '(unsigned-byte 8))
+                 #(0)
                  asn1-digest-info
                  digest)))
 
@@ -68,9 +44,12 @@
                              message
                              :start start :end end
                              :pss digest-spec)
-      (ironclad:sign-message private-key
-                             (digest-with-pkcs1-padding digest-spec message
-                                                        :start start :end end))))
+      (let ((key-length (length
+                         (ironclad:integer-to-octets
+                          (getf (ironclad:destructure-private-key private-key) :n)))))
+        (ironclad:sign-message private-key
+                               (digest-with-pkcs1-padding digest-spec message
+                                                          :start start :end end :key-length key-length)))))
 
 (defun hmac-verify-signature (digest-spec verification-key message signature
                               &key (start 0) (end (length message)))
@@ -87,9 +66,13 @@
                                      signature
                                      :start start :end end
                                      :pss digest-spec)
-          (ironclad:verify-signature public-key
-                                     (digest-with-pkcs1-padding digest-spec message :start start :end end)
-                                     signature))
+          (let ((key-length (length
+                             (ironclad:integer-to-octets
+                              (getf (ironclad:destructure-public-key public-key) :n)))))
+            (ironclad:verify-signature public-key
+                                       (digest-with-pkcs1-padding digest-spec message
+                                                                  :start start :end end :key-length key-length)
+                                       signature)))
     (error (e)
       (warn "~A" e)
       nil)))
