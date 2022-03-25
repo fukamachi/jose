@@ -35,7 +35,7 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 
 For RSA algorithm, the key must be an instance of Ironclad public/private key, that can be generated with `ironclad:generate-key-pair`.
 
-To use ASN.1 key files, [asn1](https://github.com/fukamachi/asn1) library will help.
+To read from OpenSSH key files, use [cl-ssh-keys](https://github.com/dnaeon/cl-ssh-keys). To parse ASN.1 keys, [asn1](https://github.com/fukamachi/asn1) library will help.
 
 ```common-lisp
 (defvar *private-key*
