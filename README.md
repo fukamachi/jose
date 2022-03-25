@@ -8,6 +8,8 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 
 ## Usage
 
+### HMAC
+
 ```common-lisp
 (defvar *key* (ironclad:ascii-string-to-byte-array "my$ecret"))
 
@@ -27,6 +29,20 @@ A JSON Object Signing and Encryption (JOSE) implementation for Common Lisp.
 ;   (("alg" . "HS256") ("typ" . "JWT"))
 ;   #(142 123 175 222 84 4 134 19 70 182 50 209 29 113 176 40 82 42 241 90 230 91
 ;     176 235 254 57 221 93 97 220 6 101)
+```
+
+### RSA
+
+For RSA algorithm, the key must be an instance of Ironclad public/private key, that can be generated with `ironclad:generate-key-pair`.
+
+To use ASN.1 key files, [asn1](https://github.com/fukamachi/asn1) library will help.
+
+```common-lisp
+(defvar *private-key*
+  (ironclad:generate-key-pair :rsa :num-bits 2048))
+
+(defvar *token*
+  (jose:encode :rs256 *private-key* '(("hello" . "world"))))
 ```
 
 ## Supported Algorithms
