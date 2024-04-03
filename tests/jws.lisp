@@ -29,7 +29,7 @@
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9A.eyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67_QGs52AzC8Ru8"))
     (ok (signals
             (jose/jws:verify :hs256 *secret* token)
-            'jose/errors:jws-verification-error))))
+            'jose/errors:jws-invalid-format))))
 
 (deftest test-header-not-json
   (let ((token
@@ -43,7 +43,7 @@
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.AeyJhIjoiYiJ9.jiMyrsmD8AoHWeQgmxZ5yq8z0lXS67_QGs52AzC8Ru8"))
     (ok (signals
             (jose/jws:verify :hs256 *secret* token)
-            'jose/errors:jws-verification-error))))
+            'jose/errors:jws-invalid-format))))
 
 (deftest test-claims-not-json
   (let ((token
