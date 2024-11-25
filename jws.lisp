@@ -3,7 +3,7 @@
         #:jose/base64
         #:jose/errors)
   (:import-from #:ironclad)
-  (:import-from #:yason)
+  (:import-from #:cl-json)
   (:import-from #:split-sequence
                 #:split-sequence)
   (:import-from #:assoc-utils
@@ -77,13 +77,12 @@
 
 (defun encode-headers (algorithm additional-headers)
   (base64url-encode
-   (yason:with-output-to-string* ()
-     (yason:encode-alist
-      `(,@additional-headers
-        ("alg" . ,(if (eq algorithm :none)
-                      "none"
-                      (symbol-name algorithm)))
-        ("typ" . "JWT"))))))
+   (json:encode-json-alist-to-string
+    `(,@additional-headers
+      ("alg" . ,(if (eq algorithm :none)
+                    "none"
+                    (symbol-name algorithm)))
+      ("typ" . "JWT")))))
 
 (defun get-signature (algorithm key message &key (start 0) (end (length message)))
   (let ((message (ironclad:ascii-string-to-byte-array message :start start :end end)))
@@ -155,8 +154,9 @@
     (macrolet ((safety (&body body)
                  `(handler-case (progn ,@body)
                     (error () (error 'jws-invalid-format :token token)))))
-      (let ((headers (safety (yason:parse (base64url-decode headers :as :string)
-                                          :object-as :alist)))
+      (let ((headers (safety (let ((json:*json-identifier-name-to-lisp* #'identity)
+                                   (json:*identifier-name-to-key* #'identity))
+                               (json:decode-json-from-string (base64url-decode headers)))))
             (payload (safety (base64url-decode payload)))
             (signature (safety (base64url-decode signature))))
         (values headers

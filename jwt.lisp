@@ -2,7 +2,7 @@
   (:use #:cl
         #:jose/errors)
   (:import-from #:jose/jws)
-  (:import-from #:yason)
+  (:import-from #:cl-json)
   (:import-from #:trivial-utf-8
                 #:utf-8-bytes-to-string)
   (:import-from #:alexandria
@@ -15,8 +15,7 @@
 (in-package #:jose/jwt)
 
 (defun encode (algorithm key claims &key headers)
-  (jose/jws:sign algorithm key (yason:with-output-to-string* ()
-                                 (yason:encode-alist claims))
+  (jose/jws:sign algorithm key (json:encode-json-alist-to-string claims)
                  :headers headers))
 
 (defun now ()
@@ -89,7 +88,9 @@
       (jose/jws:decode-token token)
     (let* ((payload-string (utf-8-bytes-to-string payload))
            (claims (handler-case
-                       (yason:parse payload-string :object-as :alist)
+                       (let ((json:*json-identifier-name-to-lisp* #'identity)
+                             (json:*identifier-name-to-key* #'identity))
+                         (json:decode-json-from-string payload-string))
                      (error ()
                        (error 'jws-invalid-format
                               :token token)))))
@@ -105,7 +106,9 @@
     (let* ((payload-string (utf-8-bytes-to-string payload))
            (claims (nreverse
                     (handler-case
-                        (yason:parse payload-string :object-as :alist)
+                        (let ((json:*json-identifier-name-to-lisp* #'identity)
+                              (json:*identifier-name-to-key* #'identity))
+                          (json:decode-json-from-string payload-string))
                       (error ()
                         (error 'jws-invalid-format
                                :token token))))))
