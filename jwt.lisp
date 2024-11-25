@@ -2,9 +2,7 @@
   (:use #:cl
         #:jose/errors)
   (:import-from #:jose/jws)
-  (:import-from #:jonathan
-                #:to-json
-                #:<jonathan-error>)
+  (:import-from #:yason)
   (:import-from #:trivial-utf-8
                 #:utf-8-bytes-to-string)
   (:import-from #:alexandria
@@ -17,7 +15,9 @@
 (in-package #:jose/jwt)
 
 (defun encode (algorithm key claims &key headers)
-  (jose/jws:sign algorithm key (jojo:to-json claims :from :alist) :headers headers))
+  (jose/jws:sign algorithm key (yason:with-output-to-string* ()
+                                 (yason:encode-alist claims))
+                 :headers headers))
 
 (defun now ()
   (- (get-universal-time) 2208988800))
@@ -87,12 +87,12 @@
   "Decodes the TOKEN without signature verification."
   (multiple-value-bind (headers payload signature)
       (jose/jws:decode-token token)
-    (let ((claims (handler-case
-                      (jojo:parse (utf-8-bytes-to-string payload)
-                                  :as :alist)
-                    (jojo:<jonathan-error> ()
-                      (error 'jws-invalid-format
-                             :token token)))))
+    (let* ((payload-string (utf-8-bytes-to-string payload))
+           (claims (handler-case
+                       (yason:parse payload-string :object-as :alist)
+                     (error ()
+                       (error 'jws-invalid-format
+                              :token token)))))
       (values claims headers signature))))
 
 (defun decode (algorithm key token
@@ -102,13 +102,13 @@
                  subject)
   (multiple-value-bind (payload headers)
       (jose/jws:verify algorithm key token)
-    (let ((claims (nreverse
-                   (handler-case
-                       (jojo:parse (utf-8-bytes-to-string payload)
-                                   :as :alist)
-                     (jojo:<jonathan-error> ()
-                       (error 'jws-invalid-format
-                              :token token))))))
+    (let* ((payload-string (utf-8-bytes-to-string payload))
+           (claims (nreverse
+                    (handler-case
+                        (yason:parse payload-string :object-as :alist)
+                      (error ()
+                        (error 'jws-invalid-format
+                               :token token))))))
       (check-claims claims
                     :issuer issuer
                     :audience audience
