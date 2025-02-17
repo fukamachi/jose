@@ -156,7 +156,7 @@
                     (error () (error 'jws-invalid-format :token token)))))
       (let ((headers (safety (let ((json:*json-identifier-name-to-lisp* #'identity)
                                    (json:*identifier-name-to-key* #'identity))
-                               (json:decode-json-from-string (base64url-decode headers)))))
+                               (json:decode-json-from-string (base64url-decode headers :as :string)))))
             (payload (safety (base64url-decode payload)))
             (signature (safety (base64url-decode signature))))
         (values headers
